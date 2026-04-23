@@ -1,0 +1,50 @@
+name: "LCOV Coverage Reporter"
+description: "Reports LCOV coverage in PR comments with threshold enforcement"
+author: "Julius Iglesia"
+
+inputs:
+  github-token:
+    description: "GitHub token for API access"
+    required: true
+    default: ${{ github.token }}
+  lcov-file:
+    description: "Path to the LCOV coverage file"
+    required: false
+    default: "coverage/lcov.info"
+  filter-changed-files:
+    description: "Only show changed files in per-file table"
+    required: false
+    default: "false"
+  delete-old-comments:
+    description: "Remove previous coverage comments before posting"
+    required: false
+    default: "false"
+  title:
+    description: "Comment heading"
+    required: false
+    default: "Coverage Report"
+  min-coverage-overall:
+    description: "Minimum total project coverage percentage. Only enforced if set."
+    required: false
+  min-coverage-changed-files:
+    description: "Minimum average coverage of files touched in the PR. Only enforced if set."
+    required: false
+  min-coverage-changed-lines:
+    description: "Minimum coverage of lines added/modified in the diff. Only enforced if set."
+    required: false
+  fail-on-threshold-violation:
+    description: "Fail the check when any set threshold is breached."
+    required: false
+    default: "true"
+
+outputs:
+  coverage-overall:
+    description: "Total project coverage percentage"
+  coverage-changed-files:
+    description: "Coverage percentage of changed files"
+  coverage-changed-lines:
+    description: "Coverage percentage of changed lines in the diff"
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
