@@ -92,7 +92,7 @@ describe("generateComment", () => {
       baseBranch: "main",
     })
 
-    expect(result).toContain("Coverage after merging `feat/my-feature` into `main`")
+    expect(result).toContain("Coverage after merging **feat/my-feature** into **main**")
   })
 
   test("omits branch header when branches not provided", () => {

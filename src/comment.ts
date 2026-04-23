@@ -135,7 +135,7 @@ export function generateComment(options: CommentOptions): string {
 
   let body = `### ${title}\n\n`
   if (headBranch && baseBranch) {
-    body += `Coverage after merging \`${headBranch}\` into \`${baseBranch}\`\n\n`
+    body += `Coverage after merging **${headBranch}** into **${baseBranch}**\n\n`
   }
   body += thresholdTable(thresholdResults)
   body += fileTable(lcov, changedFiles, repoUrl, headSha)

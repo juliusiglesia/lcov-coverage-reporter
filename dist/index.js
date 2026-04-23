@@ -30462,7 +30462,7 @@ function generateComment(options) {
     const { lcov, title, thresholdResults, changedFiles, headBranch, baseBranch, repoUrl, headSha } = options;
     let body = `### ${title}\n\n`;
     if (headBranch && baseBranch) {
-        body += `Coverage after merging \`${headBranch}\` into \`${baseBranch}\`\n\n`;
+        body += `Coverage after merging **${headBranch}** into **${baseBranch}**\n\n`;
     }
     body += thresholdTable(thresholdResults);
     body += fileTable(lcov, changedFiles, repoUrl, headSha);
