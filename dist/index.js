@@ -30423,8 +30423,11 @@ function fileTable(lcov, changedFiles) {
     return `<details>\n<summary>Coverage by file</summary>\n\n${header}${rows}\n\n</details>`;
 }
 function generateComment(options) {
-    const { lcov, title, thresholdResults, changedFiles } = options;
+    const { lcov, title, thresholdResults, changedFiles, headBranch, baseBranch } = options;
     let body = `### ${title}\n\n`;
+    if (headBranch && baseBranch) {
+        body += `Coverage after merging \`${headBranch}\` into \`${baseBranch}\`\n\n`;
+    }
     body += thresholdTable(thresholdResults);
     body += fileTable(lcov, changedFiles);
     return body;
@@ -30682,6 +30685,8 @@ async function run() {
             title,
             thresholdResults,
             changedFiles: filterChangedFiles ? changedFiles : undefined,
+            headBranch: pr.head.ref,
+            baseBranch: pr.base.ref,
         });
         if (shouldDeleteOld) {
             await (0, github_1.deleteOldComments)(token, prNumber, title);

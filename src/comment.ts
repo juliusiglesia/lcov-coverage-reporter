@@ -10,6 +10,8 @@ interface CommentOptions {
   title: string
   thresholdResults: ThresholdResult
   changedFiles?: string[]
+  headBranch?: string
+  baseBranch?: string
 }
 
 function formatUncoveredLines(details: { line: number; hit: number }[]): string {
@@ -76,9 +78,12 @@ function fileTable(lcov: FileCoverage[], changedFiles?: string[]): string {
 }
 
 export function generateComment(options: CommentOptions): string {
-  const { lcov, title, thresholdResults, changedFiles } = options
+  const { lcov, title, thresholdResults, changedFiles, headBranch, baseBranch } = options
 
   let body = `### ${title}\n\n`
+  if (headBranch && baseBranch) {
+    body += `Coverage after merging \`${headBranch}\` into \`${baseBranch}\`\n\n`
+  }
   body += thresholdTable(thresholdResults)
   body += fileTable(lcov, changedFiles)
 

@@ -87,6 +87,8 @@ async function run(): Promise<void> {
       title,
       thresholdResults,
       changedFiles: filterChangedFiles ? changedFiles : undefined,
+      headBranch: pr.head.ref,
+      baseBranch: pr.base.ref,
     })
 
     if (shouldDeleteOld) {

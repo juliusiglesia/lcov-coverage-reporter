@@ -82,4 +82,26 @@ describe("generateComment", () => {
     expect(result).toContain("3")
     expect(result).toContain("7")
   })
+
+  test("includes branch header when branches provided", () => {
+    const result = generateComment({
+      lcov,
+      title: "Coverage Report",
+      thresholdResults: { rows: [], failures: [] },
+      headBranch: "feat/my-feature",
+      baseBranch: "main",
+    })
+
+    expect(result).toContain("Coverage after merging `feat/my-feature` into `main`")
+  })
+
+  test("omits branch header when branches not provided", () => {
+    const result = generateComment({
+      lcov,
+      title: "Coverage Report",
+      thresholdResults: { rows: [], failures: [] },
+    })
+
+    expect(result).not.toContain("Coverage after merging")
+  })
 })
