@@ -1,6 +1,10 @@
 import { FileCoverage } from "./lcov"
 import { ThresholdResult } from "./threshold"
 
+function escapeMarkdown(s: string): string {
+  return s.replace(/[|[\]<>`]/g, (c) => `\\${c}`)
+}
+
 interface CommentOptions {
   lcov: FileCoverage[]
   title: string
@@ -64,7 +68,7 @@ function fileTable(lcov: FileCoverage[], changedFiles?: string[]): string {
           ? "N/A"
           : `${((f.lines.hit / f.lines.found) * 100).toFixed(2)}%`
       const uncovered = formatUncoveredLines(f.lines.details)
-      return `| ${f.file} | ${pct} | ${uncovered} |`
+      return `| ${escapeMarkdown(f.file)} | ${pct} | ${uncovered} |`
     })
     .join("\n")
 

@@ -1,4 +1,4 @@
-import { execSync } from "child_process"
+import { execFileSync } from "child_process"
 
 export type DiffMap = Record<string, number[]>
 
@@ -42,7 +42,10 @@ export function parseDiff(diffOutput: string): DiffMap {
 }
 
 export function getDiffLines(baseSha: string): DiffMap {
-  const output = execSync(`git diff ${baseSha}...HEAD`, {
+  if (!/^[0-9a-f]{40}$/.test(baseSha)) {
+    throw new Error(`Invalid base SHA: ${baseSha}`)
+  }
+  const output = execFileSync("git", ["diff", `${baseSha}...HEAD`], {
     encoding: "utf-8",
     maxBuffer: 50 * 1024 * 1024,
   })

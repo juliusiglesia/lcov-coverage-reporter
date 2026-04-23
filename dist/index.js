@@ -30368,6 +30368,9 @@ async function getChangedFiles(token, base, head) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateComment = generateComment;
+function escapeMarkdown(s) {
+    return s.replace(/[|[\]<>`]/g, (c) => `\\${c}`);
+}
 function formatUncoveredLines(details) {
     const uncovered = details.filter((d) => d.hit === 0).map((d) => d.line);
     if (uncovered.length === 0)
@@ -30414,7 +30417,7 @@ function fileTable(lcov, changedFiles) {
             ? "N/A"
             : `${((f.lines.hit / f.lines.found) * 100).toFixed(2)}%`;
         const uncovered = formatUncoveredLines(f.lines.details);
-        return `| ${f.file} | ${pct} | ${uncovered} |`;
+        return `| ${escapeMarkdown(f.file)} | ${pct} | ${uncovered} |`;
     })
         .join("\n");
     return `<details>\n<summary>Coverage by file</summary>\n\n${header}${rows}\n\n</details>`;
@@ -30475,7 +30478,10 @@ function parseDiff(diffOutput) {
     return result;
 }
 function getDiffLines(baseSha) {
-    const output = (0, child_process_1.execSync)(`git diff ${baseSha}...HEAD`, {
+    if (!/^[0-9a-f]{40}$/.test(baseSha)) {
+        throw new Error(`Invalid base SHA: ${baseSha}`);
+    }
+    const output = (0, child_process_1.execFileSync)("git", ["diff", `${baseSha}...HEAD`], {
         encoding: "utf-8",
         maxBuffer: 50 * 1024 * 1024,
     });
@@ -30619,6 +30625,7 @@ function getOptionalNumber(name) {
 async function run() {
     try {
         const token = core.getInput("github-token", { required: true });
+        core.setSecret(token);
         const lcovFile = core.getInput("lcov-file") || "coverage/lcov.info";
         const filterChangedFiles = core.getInput("filter-changed-files") === "true";
         const shouldDeleteOld = core.getInput("delete-old-comments") === "true";
@@ -30631,8 +30638,7 @@ async function run() {
         const lcov = await (0, lcov_1.parseLcov)(lcovContent);
         const overallCoverage = (0, lcov_1.percentage)(lcov);
         const context = github.context;
-        const isPR = context.eventName === "pull_request" ||
-            context.eventName === "pull_request_target";
+        const isPR = context.eventName === "pull_request";
         if (!isPR) {
             core.info("Not a pull request event — skipping comment and thresholds");
             core.setOutput("coverage-overall", overallCoverage.toFixed(2));

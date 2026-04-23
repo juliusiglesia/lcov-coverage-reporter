@@ -22,6 +22,7 @@ function getOptionalNumber(name: string): number | null {
 async function run(): Promise<void> {
   try {
     const token = core.getInput("github-token", { required: true })
+    core.setSecret(token)
     const lcovFile = core.getInput("lcov-file") || "coverage/lcov.info"
     const filterChangedFiles = core.getInput("filter-changed-files") === "true"
     const shouldDeleteOld = core.getInput("delete-old-comments") === "true"
@@ -37,9 +38,7 @@ async function run(): Promise<void> {
     const overallCoverage = percentage(lcov)
 
     const context = github.context
-    const isPR =
-      context.eventName === "pull_request" ||
-      context.eventName === "pull_request_target"
+    const isPR = context.eventName === "pull_request"
 
     if (!isPR) {
       core.info("Not a pull request event — skipping comment and thresholds")
