@@ -11,7 +11,7 @@ inputs:
     description: "Path to the LCOV coverage file"
     required: false
     default: "coverage/lcov.info"
-  filter-changed-files:
+  display-changed-files-only:
     description: "Only show changed files in per-file table"
     required: false
     default: "false"

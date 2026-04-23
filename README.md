@@ -10,7 +10,7 @@ GitHub Action that reports LCOV coverage in a PR comment with threshold enforcem
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     lcov-file: ./coverage.lcov
-    filter-changed-files: true
+    display-changed-files-only: true
     delete-old-comments: true
     min-coverage-overall: 59
     min-coverage-changed-files: 70
@@ -23,7 +23,7 @@ GitHub Action that reports LCOV coverage in a PR comment with threshold enforcem
 |-------|---------|-------------|
 | `github-token` | `${{ github.token }}` | GitHub API token |
 | `lcov-file` | `coverage/lcov.info` | Path to LCOV file |
-| `filter-changed-files` | `false` | Only show changed files in per-file table |
+| `display-changed-files-only` | `false` | Only show changed files in per-file table |
 | `delete-old-comments` | `false` | Remove previous coverage comments before posting |
 | `title` | `Coverage Report` | Comment heading |
 | `min-coverage-overall` | — | Minimum total project coverage %. Only enforced if set. |

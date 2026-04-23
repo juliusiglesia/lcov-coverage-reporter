@@ -24,7 +24,7 @@ async function run(): Promise<void> {
     const token = core.getInput("github-token", { required: true })
     core.setSecret(token)
     const lcovFile = core.getInput("lcov-file") || "coverage/lcov.info"
-    const filterChangedFiles = core.getInput("filter-changed-files") === "true"
+    const filterChangedFiles = core.getInput("display-changed-files-only") === "true"
     const shouldDeleteOld = core.getInput("delete-old-comments") === "true"
     const title = core.getInput("title") || "Coverage Report"
     const minOverall = getOptionalNumber("min-coverage-overall")
