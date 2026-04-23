@@ -82,6 +82,7 @@ async function run(): Promise<void> {
       },
     })
 
+    const { owner, repo } = context.repo
     const commentBody = generateComment({
       lcov,
       title,
@@ -89,6 +90,8 @@ async function run(): Promise<void> {
       changedFiles: filterChangedFiles ? changedFiles : undefined,
       headBranch: pr.head.ref,
       baseBranch: pr.base.ref,
+      repoUrl: `https://github.com/${owner}/${repo}`,
+      headSha: headSha,
     })
 
     if (shouldDeleteOld) {

@@ -30371,25 +30371,35 @@ exports.generateComment = generateComment;
 function escapeMarkdown(s) {
     return s.replace(/[|[\]<>`]/g, (c) => `\\${c}`);
 }
-function formatUncoveredLines(details) {
+function formatUncoveredLines(details, filePath, repoUrl, headSha) {
     const uncovered = details.filter((d) => d.hit === 0).map((d) => d.line);
     if (uncovered.length === 0)
         return "";
     const ranges = [];
-    let start = uncovered[0];
-    let end = uncovered[0];
+    let rangeStart = uncovered[0];
+    let rangeEnd = uncovered[0];
     for (let i = 1; i < uncovered.length; i++) {
-        if (uncovered[i] === end + 1) {
-            end = uncovered[i];
+        if (uncovered[i] === rangeEnd + 1) {
+            rangeEnd = uncovered[i];
         }
         else {
-            ranges.push(start === end ? `${start}` : `${start}-${end}`);
-            start = uncovered[i];
-            end = uncovered[i];
+            ranges.push({ start: rangeStart, end: rangeEnd });
+            rangeStart = uncovered[i];
+            rangeEnd = uncovered[i];
         }
     }
-    ranges.push(start === end ? `${start}` : `${start}-${end}`);
-    return ranges.join(", ");
+    ranges.push({ start: rangeStart, end: rangeEnd });
+    const canLink = repoUrl && headSha && filePath;
+    return ranges
+        .map((r) => {
+        const label = r.start === r.end ? `${r.start}` : `${r.start}-${r.end}`;
+        if (canLink) {
+            const anchor = r.start === r.end ? `L${r.start}` : `L${r.start}-L${r.end}`;
+            return `[${label}](${repoUrl}/blob/${headSha}/${filePath}#${anchor})`;
+        }
+        return label;
+    })
+        .join(", ");
 }
 function thresholdTable(results) {
     if (results.rows.length === 0)
@@ -30403,33 +30413,59 @@ function thresholdTable(results) {
         .join("\n");
     return `${header}\n${rows}\n\n---\n\n`;
 }
-function fileTable(lcov, changedFiles) {
+function getPackage(filePath) {
+    const parts = filePath.split("/");
+    return parts.length > 1 ? parts.slice(0, -1).join("/") : "";
+}
+function getFileName(filePath) {
+    const parts = filePath.split("/");
+    return parts[parts.length - 1];
+}
+function fileLink(filePath, repoUrl, headSha) {
+    const name = escapeMarkdown(getFileName(filePath));
+    if (repoUrl && headSha) {
+        return `[${name}](${repoUrl}/blob/${headSha}/${filePath})`;
+    }
+    return name;
+}
+function fileTable(lcov, changedFiles, repoUrl, headSha) {
     let files = lcov;
     if (changedFiles) {
         files = lcov.filter((entry) => changedFiles.some((f) => entry.file.endsWith(f) || f.endsWith(entry.file)));
     }
     if (files.length === 0)
         return "";
-    const header = `| File | Lines | Uncovered Lines |\n|------|-------|-----------------|\n`;
-    const rows = files
-        .map((f) => {
-        const pct = f.lines.found === 0
-            ? "N/A"
-            : `${((f.lines.hit / f.lines.found) * 100).toFixed(2)}%`;
-        const uncovered = formatUncoveredLines(f.lines.details);
-        return `| ${escapeMarkdown(f.file)} | ${pct} | ${uncovered} |`;
-    })
-        .join("\n");
-    return `<details>\n<summary>Coverage by file</summary>\n\n${header}${rows}\n\n</details>`;
+    const grouped = new Map();
+    for (const f of files) {
+        const pkg = getPackage(f.file);
+        if (!grouped.has(pkg))
+            grouped.set(pkg, []);
+        grouped.get(pkg).push(f);
+    }
+    let table = `| File | Lines | Uncovered Lines |\n|------|-------|-----------------|\n`;
+    for (const [pkg, pkgFiles] of grouped) {
+        if (pkg) {
+            table += `| **${escapeMarkdown(pkg)}** | | |\n`;
+        }
+        for (const f of pkgFiles) {
+            const pct = f.lines.found === 0
+                ? "N/A"
+                : `${((f.lines.hit / f.lines.found) * 100).toFixed(2)}%`;
+            const uncovered = formatUncoveredLines(f.lines.details, f.file, repoUrl, headSha);
+            const link = fileLink(f.file, repoUrl, headSha);
+            table += `| ${pkg ? "&nbsp;&nbsp;" : ""}${link} | ${pct} | ${uncovered} |\n`;
+        }
+    }
+    return `<details>\n<summary>Coverage by file</summary>\n\n${table}\n</details>`;
 }
 function generateComment(options) {
-    const { lcov, title, thresholdResults, changedFiles, headBranch, baseBranch } = options;
+    const { lcov, title, thresholdResults, changedFiles, headBranch, baseBranch, repoUrl, headSha } = options;
     let body = `### ${title}\n\n`;
     if (headBranch && baseBranch) {
         body += `Coverage after merging \`${headBranch}\` into \`${baseBranch}\`\n\n`;
     }
     body += thresholdTable(thresholdResults);
-    body += fileTable(lcov, changedFiles);
+    body += fileTable(lcov, changedFiles, repoUrl, headSha);
     return body;
 }
 //# sourceMappingURL=comment.js.map
@@ -30680,6 +30716,7 @@ async function run() {
                 changedLines: minChangedLines,
             },
         });
+        const { owner, repo } = context.repo;
         const commentBody = (0, comment_1.generateComment)({
             lcov,
             title,
@@ -30687,6 +30724,8 @@ async function run() {
             changedFiles: filterChangedFiles ? changedFiles : undefined,
             headBranch: pr.head.ref,
             baseBranch: pr.base.ref,
+            repoUrl: `https://github.com/${owner}/${repo}`,
+            headSha: headSha,
         });
         if (shouldDeleteOld) {
             await (0, github_1.deleteOldComments)(token, prNumber, title);

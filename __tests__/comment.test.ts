@@ -45,7 +45,7 @@ describe("generateComment", () => {
     expect(result).toContain("59%")
     expect(result).toContain("🟢 Pass")
     expect(result).toContain("🔴 Fail")
-    expect(result).toContain("src/foo.ts")
+    expect(result).toContain("foo.ts")
   })
 
   test("omits threshold table when no thresholds", () => {
@@ -58,7 +58,7 @@ describe("generateComment", () => {
     })
 
     expect(result).not.toContain("Threshold")
-    expect(result).toContain("src/foo.ts")
+    expect(result).toContain("foo.ts")
   })
 
   test("filters to changed files when specified", () => {
@@ -103,5 +103,43 @@ describe("generateComment", () => {
     })
 
     expect(result).not.toContain("Coverage after merging")
+  })
+
+  test("links file names to GitHub when repoUrl and headSha provided", () => {
+    const result = generateComment({
+      lcov,
+      title: "Coverage Report",
+      thresholdResults: { rows: [], failures: [] },
+      repoUrl: "https://github.com/owner/repo",
+      headSha: "abc123",
+    })
+
+    expect(result).toContain("[foo.ts](https://github.com/owner/repo/blob/abc123/src/foo.ts)")
+  })
+
+  test("groups files by package directory", () => {
+    const multiPkg: FileCoverage[] = [
+      {
+        file: "pkg/a/foo.ts",
+        lines: { found: 2, hit: 1, details: [{ line: 1, hit: 1 }, { line: 2, hit: 0 }] },
+      },
+      {
+        file: "pkg/a/bar.ts",
+        lines: { found: 1, hit: 1, details: [{ line: 1, hit: 1 }] },
+      },
+      {
+        file: "pkg/b/baz.ts",
+        lines: { found: 1, hit: 0, details: [{ line: 1, hit: 0 }] },
+      },
+    ]
+
+    const result = generateComment({
+      lcov: multiPkg,
+      title: "Coverage Report",
+      thresholdResults: { rows: [], failures: [] },
+    })
+
+    expect(result).toContain("**pkg/a**")
+    expect(result).toContain("**pkg/b**")
   })
 })
